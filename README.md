@@ -1,4 +1,4 @@
-WIP and Unstable Archipelago integration for The Murder of Sonic the Hedgehog
+Archipelago integration for The Murder of Sonic the Hedgehog
 
 [Archipelago](https://archipelago.gg/) is "a cross-game modification system which randomizes different games, then uses the result to build a single unified multi-player game. Items from one game may be present in another, and you will need your fellow players to find items you need in their games to help you complete your own," (copied from the website)
 
@@ -11,10 +11,8 @@ The goal is to beat the game
 # Installation (client)
 1. Install [MelonLoader](https://github.com/LavaGang/MelonLoader)
 2. Drop the latest client into the folder with the TMOSTH executable
-3. Drop [MelonPreferencesManager](https://github.com/Bluscream/MelonPreferencesManager) (Mono) into the `Mods` folder
-4. Drop [UniverseLib](https://github.com/sinai-dev/UniverseLib/releases/tag/1.5.1) (Mono, dependency of MelonPreferencesManager) into the `UserLibs` folder
-5. One launched, press F5 to open the preference manager, go into the "Archipelago" tab, and enter the connection information
-6. The game will automatically connect when you hit "New Game"
+3. Launch the game and enter the connection information
+4. The game will connect when you hit the Manual Connect button or load a save
 
 # Building
 

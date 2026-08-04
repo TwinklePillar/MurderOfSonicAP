@@ -1,5 +1,5 @@
 {
-	"version": 1,
+	"version": 2,
 	"game": "The Murder of Sonic the Hedgehog",
 	"items": [
 		{"name": "Shelf Crack", "itemtype": "progression", "inventory": "crackonshelf"},
@@ -16,8 +16,6 @@
 		{"name": "Blowdart", "itemtype": "progression", "inventory": "blowdart"},
 		{"name": "Blueprints", "itemtype": "progression", "inventory": "blueprints"},
 		{"name": "Broken Robot Arm", "itemtype": "progression", "inventory": "brokenrobotarm"},
-		{"name": "Amy's Hammer", "itemtype": "progression", "inventory": "amyshammer"},
-		{"name": "Menu", "itemtype": "progression", "inventory": "menu"},
 
 		{"name": "Dining Car", "itemtype": "car", "env": "Prologue"},
 		{"name": "Dining Closet", "itemtype": "car", "env": "DiningCloset"},
@@ -31,8 +29,27 @@
 		{"name": "Ramen", "itemtype": "filler"},
 		{"name": "Chicken Cordon Bleu", "itemtype": "filler"}
 	],
+	"connections": [
+		{"from": "Menu", "to": "Dining Car", "rule": [], "car_rando": 1},
+		{"from": "Dining Car Interlude", "to": "Dining Closet", "rule": [], "car_rando": 1},
+		{"from": "Dining Closet Interrogation", "to": "Saloon", "rule": [], "car_rando": 1},
+		{"from": "Saloon Interrogation", "to": "Library", "rule": [], "car_rando": 1},
+		{"from": "Library Interrogation", "to": "Casino", "rule": [], "car_rando": 1},
+		{"from": "Casino", "to": "Lounge", "rule": [], "car_rando": 1},
+		{"from": "Lounge Interrogation", "to": "Conductor's Car", "rule": [], "car_rando": 1},
+		{"from": "Conductor's Car Interrogation", "to": "Lockdown", "rule": []},
+		{"from": "Lockdown", "to": "Final Push", "rule": []},
+
+		{"from": "Dining Car", "to": "Dining Car Interlude", "rule": ["Vector's Ticket"], "fixed": 1},
+		{"from": "Dining Closet", "to": "Dining Closet Interrogation", "rule": ["Shelf Crack", "Stick"], "fixed": 1},
+		{"from": "Saloon", "to": "Saloon Interrogation", "rule": ["Used Cups", "Smashed Arcade"], "fixed": 1},
+		{"from": "Library", "to": "Library Interrogation", "rule": ["Mirage Express Manual", "Shadow's Lock", "Library Map"], "fixed": 1},
+		{"from": "Casino", "to": "Safe Room", "rule": [], "fixed": 1},
+		{"from": "Lounge", "to": "Lounge Interrogation", "rule": ["Keyring", "Crumpled Paper", "Hidden Passage"], "fixed": 1},
+		{"from": "Conductor's Car", "to": "Conductor's Car Interrogation", "rule": ["Blowdart", "Broken Robot Arm", "Blueprints"], "fixed": 1}
+	],
 	"rooms": [
-		{"name": "Dining Car", "type": "car", "env": "Environments/Prologue", "entrances": {"Menu": []}, "checks": [
+		{"name": "Dining Car", "type": "car", "env": "Prologue", "checks": [
 			{"name": "Bittersweet Choice 1", "sanity": "missable", "dialog": ["Prologue.FirstVisit.0.c-0"]},
 			{"name": "Bittersweet Choice 2", "sanity": "missable", "dialog": ["Prologue.FirstVisit.0.c-1"]},
 			{"name": "Menu Quiz Choice 1", "sanity": "incorrect", "dialog": ["Prologue.Menu_Quiz.0.c-0"], "death": "true"},
@@ -72,7 +89,7 @@
 			{"name": "Rouge", "sanity": "obj", "object": "Rouge"},
 			{"name": "Blaze", "sanity": "obj", "object": "Blaze"}
 		]},
-		{"name": "Dining Car Interlude", "type": "sub", "env": "Environments/Prologue", "entrances": {"Dining Car": ["Vector's Ticket"]}, "checks": [
+		{"name": "Dining Car Interlude", "type": "sub", "env": "Prologue", "checks": [
 			{"name": "Give Vector His Ticket", "sanity": "deduct", "dialog": [
 				"Prologue.Environment_Vector_Interaction_1.33.b.14", "Prologue.Give_Vector_Item.0.b.31", "Prologue.Environment_Vector_Interaction_2.0.7.b.17"
 			], "death": "vectorticket"},
@@ -81,7 +98,7 @@
 			{"name": "Choice 1", "sanity": "missable", "dialog": ["Prologue.Murder_Mystery_Rules.0.c-0"]},
 			{"name": "Choice 2", "sanity": "missable", "dialog": ["Prologue.Murder_Mystery_Rules.0.c-1"]}
 		]},
-		{"name": "Dining Closet", "type": "car", "env": "Environments/DiningCloset", "entrances": {"Dining Car Interlude": []}, "checks": [
+		{"name": "Dining Closet", "type": "car", "env": "DiningCloset", "checks": [
 			{"name": "Everyone Alright Choice 1", "sanity": "missable", "dialog": ["DiningCloset.0.c-0"]},
 			{"name": "Everyone Alright Choice 2", "sanity": "missable", "dialog": ["DiningCloset.0.c-1"]},
 			{"name": "Talk to Amy Choice 1", "sanity": "dialog", "dialog": ["DiningCloset.Amy_Interaction_Prompts.0.c-0"]},
@@ -95,7 +112,7 @@
 			{"name": "Stick", "sanity": "obj", "object": "Stick"},
 			{"name": "Amy", "sanity": "obj", "object": "Amy"}
 		]},
-		{"name": "Dining Closet Interrogation", "type": "sub", "env": "Environments/DiningCloset", "entrances": {"Dining Closet": ["Shelf Crack", "Stick"]}, "checks": [
+		{"name": "Dining Closet Interrogation", "type": "sub", "env": "DiningCloset", "checks": [
 			{"name": "What Was Amy Up To Choice 1", "sanity": "incorrect", "dialog": ["DiningCloset.Interrogation_Part1.0.c-0"], "death": "true"},
 			{"name": "What Was Amy Up To Choice 2", "sanity": "deduct", "dialog": ["DiningCloset.Interrogation_Part1.0.c-1"], "death": "false"},
 			{"name": "What Was Amy Up To Choice 3", "sanity": "incorrect", "dialog": ["DiningCloset.Interrogation_Part1.0.c-2"], "death": "true"},
@@ -109,7 +126,7 @@
 			{"name": "Runner #1", "sanity": "run", "index": 5},
 			{"name": "Runner #2", "sanity": "run", "index": 6}
 		]},
-		{"name": "Saloon", "type": "car", "env": "Environments/Saloon", "entrances": {"Dining Closet Interrogation": []}, "checks": [
+		{"name": "Saloon", "type": "car", "env": "Saloon", "checks": [
 			{"name": "Where's Everyone Choice 1", "sanity": "missable", "dialog": ["Saloon.FirstVisit.0.c-0"]},
 			{"name": "Where's Everyone Choice 2", "sanity": "missable", "dialog": ["Saloon.FirstVisit.0.c-1"]},
 			{"name": "Tag Along Choice 1", "sanity": "missable", "dialog": ["Saloon.FirstVisit.0.g-0.c-2"]},
@@ -132,7 +149,7 @@
 			{"name": "Knuckles", "sanity": "obj", "object": "Knuckles"},
 			{"name": "Screen", "sanity": "scr", "object": "Screen"}
 		]},
-		{"name": "Saloon Interrogation", "type": "sub", "env": "Environments/Saloon", "entrances": {"Saloon": ["Used Cups", "Smashed Arcade"]}, "checks": [
+		{"name": "Saloon Interrogation", "type": "sub", "env": "Saloon", "checks": [
 			{"name": "What Was Distracting Knuckles", "sanity": "deduct", "dialog": [
 				"Saloon.Interrogation_Part1.12", "Saloon.Interrogation_Part1_Have_Correct_Clue.1.b.22"
 			], "death": "smashedarcade"},
@@ -158,7 +175,7 @@
 			{"name": "Runner #3", "sanity": "run", "index": 7},
 			{"name": "Fixed Arcade", "sanity": "obj", "object": "Fixed Arcade"}
 		]},
-		{"name": "Library", "type": "car", "env": "Environments/Library", "entrances": {"Saloon Interrogation": []}, "checks": [
+		{"name": "Library", "type": "car", "env": "Library", "checks": [
 			{"name": "Any Clues Choice 1", "sanity": "missable", "dialog": ["Library.FirstVisit.0.c-0"]},
 			{"name": "Any Clues Choice 2", "sanity": "missable", "dialog": ["Library.FirstVisit.0.c-1"]},
 			{"name": "My Role Choice 1", "sanity": "missable", "dialog": ["Library.FirstVisit.0.g-0.c-2"]},
@@ -188,7 +205,7 @@
 			{"name": "Espio", "sanity": "obj", "object": "Espio"},
 			{"name": "Screen", "sanity": "scr", "object": "Screen"}
 		]},
-		{"name": "Library Interrogation", "type": "sub", "env": "Environments/Library", "entrances": {"Library": ["Mirage Express Manual", "Shadow's Lock", "Library Map"]}, "checks": [
+		{"name": "Library Interrogation", "type": "sub", "env": "Library", "checks": [
 			{"name": "What Book Was Espio Reading", "sanity": "deduct", "dialog": [
 				"Library.Interrogation_Part1.9", "Library.Interrogation_Part1_Have_Correct_Clue.1.b.15"
 			], "death": "mirageexpressmanual"},
@@ -228,7 +245,7 @@
 			{"name": "Runner #2", "sanity": "run", "index": 11},
 			{"name": "Runner #3", "sanity": "run", "index": 12}
 		]},
-		{"name": "Casino", "type": "car", "env": "Environments/Casino", "entrances": {"Library Interrogation": []}, "checks": [
+		{"name": "Casino", "type": "car", "env": "Casino", "checks": [
 			{"name": "Heist Accomplice Choice 1", "sanity": "missable", "dialog": ["Casino.FirstVisit.0.c-0"]},
 			{"name": "Heist Accomplice Choice 2", "sanity": "missable", "dialog": ["Casino.FirstVisit.0.c-1"]},
 			{"name": "Attack the Guard", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt1.0.c-0"], "death": "true"},
@@ -279,7 +296,7 @@
 			{"name": "Rouge", "sanity": "obj", "object": "Rouge"},
 			{"name": "Screen", "sanity": "scr", "object": "Screen"}
 		]},
-		{"name": "Safe Room", "type": "sub", "env": "Environments/SafeRoom", "entrances": {"Casino": []}, "checks": [
+		{"name": "Safe Room", "type": "sub", "env": "SafeRoom", "checks": [
 			{"name": "Too Many Choices 1", "sanity": "incorrect", "dialog": ["SafeRoom.Return_To_Egg_Options.0.c-0"], "death": "true"},
 			{"name": "Too Many Choices 2", "sanity": "incorrect", "dialog": ["SafeRoom.Return_To_Egg_Options.0.c-1"], "death": "true"},
 			{"name": "Too Many Choices 3", "sanity": "incorrect", "dialog": ["SafeRoom.Return_To_Egg_Options.0.c-2"], "death": "true"},
@@ -300,7 +317,7 @@
 			{"name": "Wall of Safes", "sanity": "obj", "object": "Wall of Safes"},
 			{"name": "Giant Safe", "sanity": "obj", "object": "Giant Safe"}
 		]},
-		{"name": "Lounge", "type": "car", "env": "Environments/Lounge", "entrances": {"Casino": []}, "checks": [
+		{"name": "Lounge", "type": "car", "env": "Lounge", "checks": [
 			{"name": "Open the Wardrobe Choice 1", "sanity": "missable", "dialog": ["Lounge.Wardrobe.0.c-0"]},
 			{"name": "Open the Wardrobe Choice 2", "sanity": "missable", "dialog": ["Lounge.Wardrobe.0.c-1"]},
 			{"name": "Big Chao Band Choice 1", "sanity": "dialog", "dialog": ["Lounge.Big_Band.0.c-0"]},
@@ -336,7 +353,7 @@
 			{"name": "Wardrobe String", "sanity": "obj", "object": "String"},
 			{"name": "Screen", "sanity": "scr", "object": "Screen"}
 		]},
-		{"name": "Lounge Interrogation", "type": "sub", "env": "Environments/Lounge", "entrances": {"Lounge": ["Keyring", "Crumpled Paper", "Hidden Passage"]}, "checks": [
+		{"name": "Lounge Interrogation", "type": "sub", "env": "Lounge", "checks": [
 			{"name": "How Did Sonic Get To The Dining Car", "sanity": "deduct", "dialog": [
 				"Lounge.Interrogation_Part1.12", "Lounge.Interrogation_Part1_Have_Correct_Clue.1.b.14"
 			], "death": "hiddenpassage"},
@@ -359,7 +376,7 @@
 			{"name": "Runner #2", "sanity": "run", "index": 15},
 			{"name": "Runner #3", "sanity": "run", "index": 14}
 		]},
-		{"name": "Conductor's Car", "type": "car", "env": "Environments/Conductor_Car", "entrances": {"Lounge Interrogation": []}, "checks": [
+		{"name": "Conductor's Car", "type": "car", "env": "Conductor_Car", "checks": [
 			{"name": "Speakers Choice 1", "sanity": "dialog", "dialog": ["Conductor_Car.Sound_System.0.c-0"]},
 			{"name": "Speakers Choice 2", "sanity": "dialog", "dialog": ["Conductor_Car.Sound_System.0.c-1"]},
 			
@@ -375,7 +392,7 @@
 			{"name": "Shadow", "sanity": "obj", "object": "Shadow"},
 			{"name": "Amy", "sanity": "obj", "object": "Amy"}
 		]},
-		{"name": "Conductor's Car Interrogation", "type": "sub", "env": "Environments/Conductor_Car", "entrances": {"Conductor's Car": ["Blowdart", "Broken Robot Arm", "Blueprints"]}, "checks": [
+		{"name": "Conductor's Car Interrogation", "type": "sub", "env": "Conductor_Car", "checks": [
 			{"name": "Who Dunnit Tails", "sanity": "incorrect", "index": 0, "death": "true"},
 			{"name": "Who Dunnit Amy", "sanity": "deduct", "index": 1, "death": "false"},
 			{"name": "Who Dunnit Knuckles", "sanity": "incorrect", "index": 2, "death": "true"},
@@ -409,7 +426,7 @@
 			{"name": "Runner #2", "sanity": "run", "index": 28},
 			{"name": "Runner #3", "sanity": "run", "index": 33}
 		]},
-		{"name": "Lockdown", "type": "car_noitem", "env": "Environments/LockdownDiningCar", "entrances": {"Conductor's Car Interrogation": []}, "checks": [
+		{"name": "Lockdown", "type": "car_noitem", "env": "LockdownDiningCar", "checks": [
 			{"name": "How Ya Doin Choice 1", "sanity": "missable", "dialog": ["LockdownDiningCar.0.c-0"]},
 			{"name": "How Ya Doin Choice 2", "sanity": "missable", "dialog": ["LockdownDiningCar.0.c-1"]},
 			{"name": "Eggman Reveal Choice 1", "sanity": "missable", "dialog": ["LockdownDiningCar.Eggman_Appears.0.c-0"]},
@@ -431,7 +448,7 @@
 			{"name": "Lockdown Door", "sanity": "obj", "object": "Lockdown Door"},
 			{"name": "Sonic", "sanity": "obj", "object": "Sonic"}
 		]},
-		{"name": "Final Push", "type": "car_noitem", "env": "Environments/Final_Push", "entrances": {"Lockdown": []}, "checks": [
+		{"name": "Final Push", "type": "car_noitem", "env": "Final_Push", "checks": [
 			{"name": "Runner #1", "sanity": "run", "index": 18},
 			{"name": "Runner #2", "sanity": "run", "index": 20},
 			{"name": "Runner #3", "sanity": "run", "index": 29},

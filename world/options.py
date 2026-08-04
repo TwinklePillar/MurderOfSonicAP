@@ -1,21 +1,26 @@
 from dataclasses import dataclass
 
-from Options import PerGameCommonOptions, Toggle, Choice
+from Options import PerGameCommonOptions, Toggle, Choice, Range
 
-class CarRando(Toggle):
+class ProgressionMode(Choice):
 	"""
-	Should the train cars be put into the item pool?
-	NOTE :: Press the tilde button (~) to switch train cars
-	You will also have to do this on connect
-	The tilde button is available without car rando on as well
+	How should the game progress?
+
+	Vanilla: You go through cars as you do in the vanilla game
+	Entrance Rando: The exits to each car is randomized
+	Car Rando: Puts the train cars into the item pool
 	"""
-	display_name = "Car Rando"
+	display_name = "Progression Mode"
+
+	option_vanilla = 0
+	option_entrance_rando = 1
+	option_car_rando = 2
 
 class DialogSanity(Choice):
 	"""
 	Should the 76 choices in dialogs be checks
 	Optionally including the 64 missable choices
-	- Will require you to load a save or new game
+	- Will require you to load a save or re-enter the car
 	"""
 	display_name = "Choice Sanity"
 
@@ -39,9 +44,40 @@ class DeductionSanity(Choice):
 
 	default = option_off
 
+class RunnerSanity(Toggle):
+	"""
+	Should the 25 running minigames be checks?
+	"""
+	display_name = "Runner Sanity"
+
+class CarDupe(Range):
+	"""
+	How many duplicates of the car items should be in the pool?
+	"""
+	display_name = "Car Duplicates"
+
+	range_start = 1
+	range_end = 50
+
+	default = 1
+
+class InvDupe(Range):
+	"""
+	How many duplicates of the inventory items should be in the pool?
+	"""
+	display_name = "Inventory Duplicates"
+
+	range_start = 1
+	range_end = 50
+
+	default = 1
+
 @dataclass
 class TMOSTHOptions(PerGameCommonOptions):
-	car_rando: CarRando
+	progression_mode: ProgressionMode
+	car_dupe: CarDupe
+	inv_dupe: InvDupe
 	choice_sanity: DialogSanity
 	deduction_sanity: DeductionSanity
+	runner_sanity: RunnerSanity
 

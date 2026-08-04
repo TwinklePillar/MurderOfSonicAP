@@ -13,10 +13,12 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
 using System.Text;
+using System;
 using Ink.Runtime;
 using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
-[assembly: MelonInfo(typeof(tmosthap.ModMain), "TMOSTH-AP", "0.1.0", "Kylogias")]
+[assembly: MelonInfo(typeof(tmosthap.ModMain), "TMOSTH-AP", "0.1.0", "TwinklePillar")]
 [assembly: MelonGame("Sonic Social", "The Murder of Sonic The Hedgehog")]
 
 namespace tmosthap {
@@ -27,14 +29,8 @@ namespace tmosthap {
 			AfterFirstComplete = 2
 		}
 		
-		static MelonPreferences_Entry<string> ip;
-		static MelonPreferences_Entry<int> port;
-		static MelonPreferences_Entry<string> slot;
-		static MelonPreferences_Entry<string> password;
-		static MelonPreferences_Entry<bool> deathlinkEnabled;
-		static MelonPreferences_Entry<QOLOption> autoskip;
-		
 		public static ArchipelagoSession currentSession;
+		public static int curSlot = -1;
 		public static DeathLinkService deathLink;
 		static Dictionary<string, object> slotDataDict;
 		static Dictionary<ItemIds, int> itemState;
@@ -44,9 +40,9 @@ namespace tmosthap {
 			public float timeLeft;
 		}
 		private static DisplayedMessage[] messageText;
-		static Queue<string> messages;
+		public static Queue<string> messages;
 
-		static GameObject inventoryListener;
+		public static GameObject inventoryListener;
 
 		static int lastItem;
 		static bool invDirty;
@@ -54,12 +50,6 @@ namespace tmosthap {
 		
 		public override void OnInitializeMelon() {
 			MelonPreferences.CreateCategory("Archipelago");
-			ip = MelonPreferences.CreateEntry<string>("Archipelago", "IP", "localhost");
-			port = MelonPreferences.CreateEntry<int>("Archipelago", "Port", 38281);
-			slot = MelonPreferences.CreateEntry<string>("Archipelago", "Slot", "Player1");
-			password = MelonPreferences.CreateEntry<string>("Archipelago", "Password", "");
-			deathlinkEnabled = MelonPreferences.CreateEntry<bool>("Archipelago", "Deathlink Enabled", false);
-			autoskip = MelonPreferences.CreateEntry<QOLOption>("Archipelago", "Autoskip Dialog", QOLOption.Off);
 			
 			new SlotData();
 			messages = new Queue<string>();
@@ -68,28 +58,23 @@ namespace tmosthap {
 			for (int i = 0; i < messageText.Length; i++) {
 				messageText[i] = new DisplayedMessage();
 			}
+			SaveStates.initStates();
 		}
 		
 		public override void OnSceneWasInitialized(int buildIndex, string sceneName) {
-			/*
-			GameObject tabs = GameObject.Find("Canvas/ScreenRootLayer").transform.GetChild(4).Find("OverlayScreenBase/WindowRoot/Tabs").gameObject;
-			GameObject tabTemplate = tabs.transform.GetChild(1).gameObject;
-
-			GameObject apTab = GameObject.Instantiate(tabTemplate, tabs.transform);
-			apTab.transform.SetSiblingIndex(1);
-			apTab.transform.Find("AnimAnchor/Backing/Text (TMP)").gameObject.GetComponent<TMPro.TextMeshProUGUI>().text = "Archipelago";
-			*/
+			APTitle.setupTab();
+			
 			GameObject ap = new GameObject("Archipelago");
 			inventoryListener = new GameObject("Inventory Listener", typeof(OnInventoryChange));
 			inventoryListener.transform.SetParent(ap.transform);
-			inventoryListener.SetActive(false);
+		//	inventoryListener.SetActive(false);
 			GameObject canvasGO = new GameObject("APCanvas", typeof(Canvas), typeof(CanvasScaler));
 			canvasGO.transform.SetParent(ap.transform);
 			Canvas canvas = canvasGO.GetComponent<Canvas>();
 			canvas.sortingOrder = 10;
 			canvas.renderMode = RenderMode.ScreenSpaceOverlay;
 			for (int i = 0; i < messageText.Count(); i++) {
-				GameObject textGO = new GameObject(string.Format("APText {0}", i), typeof(Text));
+				GameObject textGO = new GameObject(string.Format("APText {0}", i), typeof(Text), typeof(Outline));
 				messageText[i].go = textGO;
 				messageText[i].timeLeft = 0;
 				textGO.SetActive(false);
@@ -116,6 +101,14 @@ namespace tmosthap {
 			RectTransform itemDetails = (RectTransform)invWndXfrm.Find("ItemDetails");
 			itemDetails.anchoredPosition = itemDetails.anchoredPosition * new Vector2(1.5f, 1);
 
+			GameObject closeButton = invWndXfrm.Find("Close").gameObject;
+			RectTransform arrowXfrm = (RectTransform)((GameObject)DialogView.Instance.GetType().GetField("nextArrow", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(DialogView.Instance)).transform;
+			GameObject dialogClose = GameObject.Instantiate(closeButton, arrowXfrm.parent.parent, false);
+			dialogClose.transform.position = new Vector3(arrowXfrm.position.x, ((RectTransform)arrowXfrm.parent).sizeDelta.y-arrowXfrm.position.y, 0);
+			dialogClose.GetComponent<Button>().onClick.AddListener(() => {
+				GameManager.Instance.EndConversation();
+			});
+
 			EventManager.StartListening("MinigameFinished", playerDiedListener);
 			EventManager.StartListening("RunnerPlayerDied", playerDiedListener);
 		}
@@ -130,58 +123,14 @@ namespace tmosthap {
 			}
 		}
 		
-		static bool envButton = false;
-		[HarmonyPatch(typeof(ChangeEnvironmentButton), "OnClick")]
-		private class EnvButtonPatch {
-			private static void Prefix() {
-				envButton = true;
-			}
-		}
-		
-		public static string getEnvironment() {
-			GameObject go = GameObject.Find("Canvas/EnvironmentFrame");
-			if (!go) return "";
-			return go.GetComponent<EnvironmentView>().GetEnvironmentKey();
-		}
-		
-		[HarmonyPatch(typeof(EnvironmentView), "OnMoveToEnvironment")]
-		private class EnvironmentPatch {
-			private static bool Prefix(Dictionary<string, object> message) {
-				if (currentSession == null) return false;
-				bool canContinue = !SlotData.carRando || envButton;
-				string fromEnv = getEnvironment();
-				if (!envButton) {
-					JArray complete_envs = (JArray)currentSession.DataStorage["complete_envs"];
-					bool completeEnv = false;
-					foreach (string env in complete_envs) {
-						if (env == fromEnv) completeEnv = true;
-					}
-					if (!completeEnv) currentSession.DataStorage["complete_envs"] += new[]{fromEnv};
-				}
-				if (fromEnv == "Environments/Conductor_Car" || fromEnv == "Environments/LockdownDiningCar") canContinue = true;
-				if (!canContinue) return false;
-				envButton = false;
-				JArray seen_envs = (JArray)currentSession.DataStorage["seen_envs"];
-				bool seenEnv = false;
-				foreach (string env in seen_envs) {
-					if (env == (string)message["DestinationKey"]) seenEnv = true;
-				}
-				
-				if (!seenEnv) {
-					currentSession.DataStorage["seen_envs"] += new []{(string)message["DestinationKey"]};
-				}
-				return true;
-			}
-		}
-		
 		public static bool isQOLEnabled(QOLOption qol) {
 			switch (qol) {
 				case QOLOption.Off: return false;
 				case QOLOption.On: return true;
 				case QOLOption.AfterFirstComplete:
 					if (currentSession == null) return false;
-					string curEnv = getEnvironment();
-					JArray envs = (JArray)currentSession.DataStorage["complete_envs"];
+					string curEnv = GameManager.Instance.GetEnvironmentName();
+					List<string> envs = APTitle.file.saves[curSlot].completeEnvs;
 					bool hasString = false;
 					foreach (string env in envs) {
 						if (env == curEnv) hasString = true;
@@ -192,19 +141,6 @@ namespace tmosthap {
 		}
 		
 		public override void OnUpdate() {
-			if (currentSession == null) return;
-
-			if (invDirty) {if (rebuildInventory()) invDirty = false; else if (messages.Count() == 0) messages.Enqueue("<color=#FF0000>Unable to Rebuild Inventory! Quit to Menu and Reconnect!</color>");}
-			if (deathlinkPending) {
-				if (RunnerGameManager.Instance.gameObject.activeSelf) {
-					isDeathLink = true;
-					RunnerGameManager.Instance.OnLose();
-				} else if (DialogView.Instance.gameObject.activeSelf) {
-					GameManager.Instance.EndConversation();
-				}
-				deathlinkPending = false;
-			}
-			
 			foreach (DisplayedMessage dm in messageText) {
 				dm.timeLeft -= Time.unscaledDeltaTime;
 				if (dm.go) {
@@ -247,23 +183,59 @@ namespace tmosthap {
 					text.text = string.Format("<b>{0}</b>", messages.Dequeue());
 				}
 			}
-			
-			if (isQOLEnabled(autoskip.Value)) {
-				DialogView dv = DialogView.Instance;
-				Button btn = (Button)dv.GetType().GetField("fullscreenSkipButton", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(dv);
-				if (dv.gameObject.activeSelf && btn.interactable && StoryManager.Instance.story.canContinue) {
-					dv.GetType().GetMethod("OnClickContinue", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(dv, new object[]{});
+
+			if (currentSession == null) return;
+
+			if (invDirty) {
+				string errMsg = "";
+				switch (rebuildInventory()) {
+					case InvErr.Succ:
+						invDirty = false;
+						break;
+					case InvErr.NoInst:
+						errMsg = "StoryManager.Instance is null";
+						break;
+					case InvErr.NoStor:
+						errMsg = "StoryManager.Instance.story is null";
+						break;
+					case InvErr.NoVar:
+						errMsg = "StoryManager.Instance.story.variablesState is null";
+						break;
+					case InvErr.NoInv:
+						errMsg = "StoryManager.Instance.story.variablesState[\"Inventory\"] is null";
+						break;
+					case InvErr.NoOrigin:
+						errMsg = "inventory.origins is null";
+						break;
+				}
+				int numDM = 0;
+				foreach (DisplayedMessage dm in messageText) {
+					if (dm.timeLeft > 0) numDM += 1;
+				}
+				if (errMsg != "" && numDM < 3) {
+					messages.Enqueue("<color=#FF0000>Unable to Rebuild Inventory!</color>");
+					messages.Enqueue(string.Format("<color=#FF0000>{0}</color>", errMsg));
 				}
 			}
+			if (deathlinkPending) {
+				if (RunnerGameManager.Instance.gameObject.activeSelf) {
+					isDeathLink = true;
+					RunnerGameManager.Instance.OnLose();
+				} else if (DialogView.Instance.gameObject.activeSelf) {
+					GameManager.Instance.EndConversation();
+				}
+				deathlinkPending = false;
+			}
+			
 			if (Input.GetKeyDown(KeyCode.BackQuote)) {
+				APTitle.openCarSelect();
+			/*
 				Transform rooms = GameObject.Find("Canvas/DebugMapScreen/WindowRoot").transform;
-				JArray envs = (JArray)currentSession.DataStorage["seen_envs"];
+				List<string> envs = APTitle.file.saves[curSlot].seenEnvs;
 				List<string> hasCars = new List<string>();
-				if (itemState[ItemIds.CASINO] > 0) hasCars.Add("SafeRoom");
 				foreach (APItem item in APShared.items) {
 					if (itemState[(ItemIds)item.id] > 0) hasCars.Add(item.env);
 				}
-				MelonLogger.Msg("{0}", envs);
 				for (int i = 0; i < rooms.childCount; i++) {
 					GameObject room = rooms.GetChild(i).gameObject;
 					ChangeEnvironmentButton ceb = room.GetComponent<ChangeEnvironmentButton>();
@@ -280,26 +252,13 @@ namespace tmosthap {
 					room.SetActive(hasString);
 				}
 				EventManager.TriggerEvent("ToggleMap", null);
-			}
-		}
-		
-		[HarmonyPatch(typeof(TitleScreen), "OnClickNewGame")]
-		private static class NewGamePatch {
-			private static void Prefix() {
-				ConnectToArchipelago(true);
-				inventoryListener.SetActive(true);
+			*/
 			}
 		}
 
-		[HarmonyPatch(typeof(TitleScreen), "OnLoadingSave")]
-		private static class ContinuePatch {
-			private static void Prefix() {
-				ConnectToArchipelago(true);
-				inventoryListener.SetActive(true);
-			}
-		}
-		
-		public static void ConnectToArchipelago(bool newServer) {
+		public static APConnectionInfo manualConnect;
+		public static bool awaitingSlotSelect;
+		public static void ConnectToArchipelago(APConnectionInfo connect, bool newServer) {
 			if (newServer) {
 				lastItem = -1;
 				foreach (APItem item in APShared.items) {
@@ -315,8 +274,8 @@ namespace tmosthap {
 				new SlotData();
 			}
 			
-			currentSession = ArchipelagoSessionFactory.CreateSession(ip.Value, port.Value);
-			LoginResult result = currentSession.TryConnectAndLogin("The Murder of Sonic the Hedgehog", slot.Value, ItemsHandlingFlags.AllItems, password: password.Value);
+			currentSession = ArchipelagoSessionFactory.CreateSession(connect.ip, connect.port);
+			LoginResult result = currentSession.TryConnectAndLogin("The Murder of Sonic the Hedgehog", connect.slot, ItemsHandlingFlags.AllItems, password: connect.password);
 			
 			if (result.Successful) {
 				slotDataDict = ((LoginSuccessful)result).SlotData;
@@ -335,8 +294,9 @@ namespace tmosthap {
 				currentSession.MessageLog.OnMessageReceived += OnMessageReceived;
 				deathLink = DeathLinkProvider.CreateDeathLinkService(currentSession);
 				deathLink.OnDeathLinkReceived += HandleDeathLink;
-				if (deathlinkEnabled.Value) deathLink.EnableDeathLink();
+				if (APTitle.file.client.deathLink) deathLink.EnableDeathLink();
 				messages.Enqueue("Successful Connection to TMOSTH! You may now collect checks");
+				messages.Enqueue("Press the tilde button (~) to travel to unlocked cars");
 				int i = 0;
 				foreach (ItemInfo item in currentSession.Items.AllItemsReceived) {
 					onItem(item, true);
@@ -344,9 +304,23 @@ namespace tmosthap {
 				}
 				lastItem = i;
 				while (currentSession.Items.Any()) currentSession.Items.DequeueItem();
+				
+				for (i = 0; i < APTitle.file.saves.Length; i++) {
+					APSaveData data = APTitle.file.saves[i];
+					if (data.room == curRoom && data.team == currentSession.ConnectionInfo.Team && data.slot == currentSession.ConnectionInfo.Slot) {
+						curSlot = i;
+						data.quickConnect = connect;
+						break;
+					}
+				}
 
-				currentSession.DataStorage["seen_envs"].Initialize(new JArray());
-				currentSession.DataStorage["complete_envs"].Initialize(new JArray());
+				if (i == APTitle.file.saves.Length) {
+					awaitingSlotSelect = true;
+					manualConnect = connect;
+					EventManager.TriggerEvent("OpenSaveMenu", null);
+				} else {
+					SaveDataManager.Instance.LoadFile(APTitle.file.saves[i].curSave);
+				}
 			} else {
 				MelonLogger.Error("Error while connecting to Archipelago");
 				messages.Enqueue("Error while connecting to Archipelago");
@@ -382,24 +356,32 @@ namespace tmosthap {
 			}
 			
 			protected override void Evaluate(string varName, object value) {
-				rebuildInventory();
+				invDirty = true;
 			}
 		}
-		
-		private static bool rebuildInventory() {
-			if (!StoryManager.Instance) return false;
-			if (!StoryManager.Instance.story) return false;
-			if (StoryManager.Instance.story.variablesState == null) return false;
-			if (StoryManager.Instance.story.variablesState["Inventory"] == null) return false;
+
+		enum InvErr {
+			Succ = 0,
+			NoInst = 1,
+			NoStor = 2,
+			NoVar = 3,
+			NoInv = 4,
+			NoOrigin = 5
+		};
+		private static InvErr rebuildInventory() {
+			if (!StoryManager.Instance) return InvErr.NoInst;
+			if (!StoryManager.Instance.story) return InvErr.NoStor;
+			if (StoryManager.Instance.story.variablesState == null) return InvErr.NoVar;
+			if (StoryManager.Instance.story.variablesState["Inventory"] == null) return InvErr.NoInv;
 			InkList inventory = (InkList)StoryManager.Instance.story.variablesState["Inventory"];
-			if (inventory.origins == null) return false;
+			if (inventory.origins == null) inventory.origins = StoryManager.Instance.story.listDefinitions.lists;
 			inventory.Clear();
 			foreach (APItem item in APShared.items) {
 				if (item.inventory == "") continue;
 				if (!itemState.ContainsKey((ItemIds)item.id)) continue;
 				if (itemState[(ItemIds)item.id] > 0) inventory.AddItem(item.inventory);
 			}
-			return true;
+			return InvErr.Succ;
 		}
 		
 		public static void HandleItem(ReceivedItemsHelper itemHandler) {
@@ -425,9 +407,9 @@ namespace tmosthap {
 		
 		public static bool isDeathLink = false;
 		public static void sendDeathLink(string source) {
-			string cause = string.Format("{0} {1}", slot.Value, source);
-			if (deathLink != null && deathlinkEnabled.Value && !isDeathLink) {
-				deathLink.SendDeathLink(new DeathLink(slot.Value, cause));
+			string cause = string.Format("{0} {1}", APTitle.file.saves[curSlot].quickConnect.slot, source);
+			if (deathLink != null && APTitle.file.client.deathLink && !isDeathLink) {
+				deathLink.SendDeathLink(new DeathLink(APTitle.file.saves[curSlot].quickConnect.slot, cause));
 			}
 			isDeathLink = false;
 		}

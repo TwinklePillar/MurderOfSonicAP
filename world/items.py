@@ -39,14 +39,16 @@ class ItemState:
 		itempool = []
 		precollect = []
 		for item in self.progress_items:
-			itempool.append(world.create_item(item))
+			for i in range(world.inv_dupe):
+				itempool.append(world.create_item(item))
 		if world.car_rando:
 			starting_car = world.random.choice(self.car_items)
 			for item in self.car_items:
 				if item == starting_car:
 					precollect.append(item)
 				else:
-					itempool.append(world.create_item(item))
+					for i in range(world.car_dupe):
+						itempool.append(world.create_item(item))
 		num_unfilled = len(world.multiworld.get_unfilled_locations(world.player))
 		num_filler = num_unfilled - len(itempool)
 		for i in range(num_filler):
