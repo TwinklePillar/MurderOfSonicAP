@@ -249,6 +249,7 @@ namespace tmosthap {
 		[HarmonyPatch(typeof(TitleScreen), "Start")]
 		private static class TitleScreenPatch {
 			private static void Postfix(TitleScreen __instance) {
+				ModMain.DisconnectFromArchipelago();
 				loadAPSave();
 				GameObject keyArt = __instance.gameObject.transform.Find("KeyArt").gameObject;
 				GameObject connectWindow = new GameObject("AP Connect Window", typeof(VerticalLayoutGroup), typeof(Image));
@@ -360,14 +361,6 @@ namespace tmosthap {
 				__instance.OnNameSubmit();
 			}
 		}
-		
-		static bool envButton = false;
-		[HarmonyPatch(typeof(ChangeEnvironmentButton), "OnClick")]
-		private static class EnvButtonPatch {
-			private static void Prefix() {
-				envButton = true;
-			}
-		}
 
 		static bool isLoading;
 		static bool loadedNonSave;
@@ -377,25 +370,15 @@ namespace tmosthap {
 			private static bool Prefix(Dictionary<string, object> message) {
 				string fromEnv = GameManager.Instance.GetEnvironmentName();
 				if (ModMain.currentSession == null) return false;
-				if (SlotData.entrances.Contains(fromEnv) && !envButton && !isLoading) {
+				if (SlotData.entrances.Contains(fromEnv) && ((string)message["DestinationKey"] != "SafeRoom") && !isLoading) {
 					message["DestinationKey"] = SlotData.entrances[SlotData.entrances.IndexOf(fromEnv)+1];
 				}
-				if (!isLoading && envButton && SaveStates.states.ContainsKey((string)message["DestinationKey"])) {
-					SaveDataManager.Instance.LoadFile(SaveStates.states[(string)message["DestinationKey"]]);
-					return false;
-				}
+				
 				loadedNonSave = !isLoading;
-				bool canContinue = !SlotData.carRando || envButton;
-				if (!envButton) {
-					List<string> completeEnvs = file.saves[ModMain.curSlot].completeEnvs;
-					bool completeEnv = false;
-					foreach (string env in completeEnvs) {
-						if (env == fromEnv) completeEnv = true;
-					}
-					if (!completeEnv) completeEnvs.Add(fromEnv);
-				}
+				bool canContinue = !SlotData.carRando || isLoading;
+
 				if (fromEnv == "Conductor_Car" || fromEnv == "LockdownDiningCar" || (string)message["DestinationKey"] == "SafeRoom") canContinue = true;
-				if (fromEnv == "SafeRoom") canContinue = false; // yeah I can tell this won't end well otherwise
+				if (fromEnv == "SafeRoom" && !isLoading) canContinue = false; // yeah I can tell this won't end well otherwise
 				if (!canContinue) {
 					ModMain.messages.Enqueue("Car Completed. Press the tilde button (~) to select a car and continue");
 					return false;
@@ -409,7 +392,6 @@ namespace tmosthap {
 		private static class PostEnvPatch {
 			private static void Postfix() {
 				isLoading = false;
-				envButton = false;
 			}
 		}
 
@@ -465,12 +447,17 @@ namespace tmosthap {
 				loadAPSave();
 				__result = new List<SaveData>();
 				if (isCarSelect && ModMain.curSlot != -1) {
+					List<string> hasCars = new List<string>();
+					foreach (APItem item in APShared.items) {
+						if (ModMain.itemState[(ItemIds)item.id] > 0) hasCars.Add(item.env);
+					}
 					foreach (string key in SaveStates.states.Keys) {
+						bool hasCar = file.saves[ModMain.curSlot].seenEnvs.Contains(key) || hasCars.Contains(key);
 						SaveData state = SaveStates.states[key];
 						state.GameState.playerName = file.saves[ModMain.curSlot].quickConnect.slot;
 						__result.Add(new SaveData{
 							SaveTime = "",
-							StoryState = file.saves[ModMain.curSlot].seenEnvs.Contains(key) ? state.StoryState : null,
+							StoryState = hasCar ? state.StoryState : null,
 							StageStage = state.StageStage,
 							GameState = state.GameState,
 							AudioState = state.AudioState,

@@ -70,5 +70,9 @@ class LocationState:
 			print(f"{from_region.name} -> {to_region.name} ({rule})")
 			from_region.connect(to_region, f"{from_region.name} to {to_region.name}")
 			enter = world.get_entrance(f"{from_region.name} to {to_region.name}")
+			if world.car_rando:
+				for env in env_to_regions:
+					if env_to_regions[env][0] == to_region.name and to_region.name != "Final Push" and to_region.name != "Lockdown":
+						rule = Has(to_region.name)
 			world.set_rule(enter, rule)
 		world.set_completion_rule(Has("Retirement"))

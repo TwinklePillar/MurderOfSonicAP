@@ -33,7 +33,7 @@ namespace tmosthap {
 		public static int curSlot = -1;
 		public static DeathLinkService deathLink;
 		static Dictionary<string, object> slotDataDict;
-		static Dictionary<ItemIds, int> itemState;
+		public static Dictionary<ItemIds, int> itemState;
 
 		class DisplayedMessage {
 			public GameObject go;
@@ -258,20 +258,26 @@ namespace tmosthap {
 
 		public static APConnectionInfo manualConnect;
 		public static bool awaitingSlotSelect;
+		public static void DisconnectFromArchipelago() {
+			lastItem = -1;
+			curSlot = -1;
+			foreach (APItem item in APShared.items) {
+				itemState[(ItemIds)item.id] = 0;
+			}
+			if (currentSession != null) {
+				currentSession.Items.ItemReceived -= HandleItem;
+				currentSession.MessageLog.OnMessageReceived -= OnMessageReceived;
+				deathLink.DisableDeathLink();
+				currentSession.Socket.DisconnectAsync();
+				currentSession = null;
+				deathLink = null;
+			}
+			new SlotData();
+		}
+		
 		public static void ConnectToArchipelago(APConnectionInfo connect, bool newServer) {
 			if (newServer) {
-				lastItem = -1;
-				foreach (APItem item in APShared.items) {
-					itemState[(ItemIds)item.id] = 0;
-				}
-				if (currentSession != null) {
-					currentSession.Items.ItemReceived -= HandleItem;
-					currentSession.MessageLog.OnMessageReceived -= OnMessageReceived;
-					deathLink.DisableDeathLink();
-					currentSession = null;
-					deathLink = null;
-				}
-				new SlotData();
+				DisconnectFromArchipelago();
 			}
 			
 			currentSession = ArchipelagoSessionFactory.CreateSession(connect.ip, connect.port);

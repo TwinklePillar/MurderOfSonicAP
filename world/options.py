@@ -46,7 +46,7 @@ class DeductionSanity(Choice):
 
 class RunnerSanity(Toggle):
 	"""
-	Should the 25 running minigames be checks?
+	Should the 24 running minigames be checks?
 	"""
 	display_name = "Runner Sanity"
 

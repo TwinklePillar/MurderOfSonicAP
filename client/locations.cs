@@ -114,7 +114,7 @@ namespace tmosthap {
 				if (room.env == env) {
 					foreach (APRoomCheck check in room.checks) {
 						if (check.sanity == sanity && check.obj == obj) {
-							ModMain.currentSession.Locations.CompleteLocationChecksAsync(null, check.id);
+							ModMain.currentSession.Locations.CompleteLocationChecksAsync(check.id);
 							if (check.death == "true") return true;
 							return false;
 						}
@@ -131,7 +131,7 @@ namespace tmosthap {
 				if (room.env == env) {
 					foreach (APRoomCheck check in room.checks) {
 						if (sanities.Contains(check.sanity) && check.obj == obj) {
-							ModMain.currentSession.Locations.CompleteLocationChecksAsync(null, check.id);
+							ModMain.currentSession.Locations.CompleteLocationChecksAsync(check.id);
 							if (check.death == "true") return true;
 							return false;
 						}
@@ -152,7 +152,7 @@ namespace tmosthap {
 					foreach (APRoomCheck check in room.checks) {
 						if (check.sanity == sanity && check.dialog.Contains(dialog)) {
 							if (item == null || item == check.death) {
-								ModMain.currentSession.Locations.CompleteLocationChecksAsync(null, check.id);
+								ModMain.currentSession.Locations.CompleteLocationChecksAsync(check.id);
 								if (check.death == "true") return true;
 								return false;
 							}
@@ -172,7 +172,7 @@ namespace tmosthap {
 					foreach (APRoomCheck check in room.checks) {
 						if (sanities.Contains(check.sanity) && check.dialog.Contains(dialog)) {
 							if (item == null || item == check.death) {
-								ModMain.currentSession.Locations.CompleteLocationChecksAsync(null, check.id);
+								ModMain.currentSession.Locations.CompleteLocationChecksAsync(check.id);
 								if (check.death == "true") return true;
 								return false;
 							}
@@ -194,7 +194,7 @@ namespace tmosthap {
 				if (room.env == env) {
 					foreach (APRoomCheck check in room.checks) {
 						if (check.sanity == sanity && check.index == index) {
-							ModMain.currentSession.Locations.CompleteLocationChecksAsync(null, check.id);
+							ModMain.currentSession.Locations.CompleteLocationChecksAsync(check.id);
 							if (check.death == "true") return true;
 							return false;
 						}
@@ -211,7 +211,7 @@ namespace tmosthap {
 				if (room.env == env) {
 					foreach (APRoomCheck check in room.checks) {
 						if (sanities.Contains(check.sanity) && check.index == index) {
-							ModMain.currentSession.Locations.CompleteLocationChecksAsync(null, check.id);
+							ModMain.currentSession.Locations.CompleteLocationChecksAsync(check.id);
 							if (check.death == "true") return true;
 							return false;
 						}
