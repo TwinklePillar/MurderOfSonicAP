@@ -2,7 +2,7 @@
 	"version": 2,
 	"game": "The Murder of Sonic the Hedgehog",
 	"items": [
-		{"name": "Shelf Crack", "itemtype": "progression", "inventory": "crackonshelf"},
+		{"name": "Crack on Shelf", "itemtype": "progression", "inventory": "crackonshelf"},
 		{"name": "Stick", "itemtype": "progression", "inventory": "stick"},
 		{"name": "Used Cups", "itemtype": "progression", "inventory": "usedcups"},
 		{"name": "Smashed Arcade", "itemtype": "progression", "inventory": "smashedarcade"},
@@ -27,7 +27,15 @@
 		
 		{"name": "Chili Dog", "itemtype": "filler"},
 		{"name": "Ramen", "itemtype": "filler"},
-		{"name": "Chicken Cordon Bleu", "itemtype": "filler"}
+		{"name": "Chicken Cordon Bleu", "itemtype": "filler"},
+		{"name": "Progressive Nothing", "itemtype": "filler"},
+
+		{"name": "Dining Car Evidence", "itemtype": "evidence", "evidence": ["vectorticket"]},
+		{"name": "Dining Closet Evidence", "itemtype": "evidence", "evidence": ["crackonshelf", "stick"]},
+		{"name": "Saloon Evidence", "itemtype": "evidence", "evidence": ["usedcups", "smashedarcade"]},
+		{"name": "Library Evidence", "itemtype": "evidence", "evidence": ["shadowslock", "mirageexpressmanual", "librarymap"]},
+		{"name": "Lounge Evidence", "itemtype": "evidence", "evidence": ["crumpledpaper", "hiddenpassage", "keyring"]},
+		{"name": "Conductor's Car Evidence", "itemtype": "evidence", "evidence": ["blowdart", "blueprints", "brokenrobotarm"]}
 	],
 	"connections": [
 		{"from": "Menu", "to": "Dining Car", "rule": [], "car_rando": 1},
@@ -40,13 +48,13 @@
 		{"from": "Conductor's Car Interrogation", "to": "Lockdown", "rule": []},
 		{"from": "Lockdown", "to": "Final Push", "rule": []},
 
-		{"from": "Dining Car", "to": "Dining Car Interlude", "rule": ["Vector's Ticket"], "fixed": 1},
-		{"from": "Dining Closet", "to": "Dining Closet Interrogation", "rule": ["Shelf Crack", "Stick"], "fixed": 1},
-		{"from": "Saloon", "to": "Saloon Interrogation", "rule": ["Used Cups", "Smashed Arcade"], "fixed": 1},
-		{"from": "Library", "to": "Library Interrogation", "rule": ["Mirage Express Manual", "Shadow's Lock", "Library Map"], "fixed": 1},
+		{"from": "Dining Car", "to": "Dining Car Interlude", "rule": ["Vector's Ticket"], "evidence": "Dining Car Evidence", "fixed": 1},
+		{"from": "Dining Closet", "to": "Dining Closet Interrogation", "rule": ["Shelf Crack", "Stick"], "evidence": "Dining Closet Evidence", "fixed": 1},
+		{"from": "Saloon", "to": "Saloon Interrogation", "rule": ["Used Cups", "Smashed Arcade"], "evidence": "Saloon Evidence", "fixed": 1},
+		{"from": "Library", "to": "Library Interrogation", "rule": ["Mirage Express Manual", "Shadow's Lock", "Library Map"], "evidence": "Library Evidence", "fixed": 1},
 		{"from": "Casino", "to": "Safe Room", "rule": [], "fixed": 1},
-		{"from": "Lounge", "to": "Lounge Interrogation", "rule": ["Keyring", "Crumpled Paper", "Hidden Passage"], "fixed": 1},
-		{"from": "Conductor's Car", "to": "Conductor's Car Interrogation", "rule": ["Blowdart", "Broken Robot Arm", "Blueprints"], "fixed": 1}
+		{"from": "Lounge", "to": "Lounge Interrogation", "rule": ["Keyring", "Crumpled Paper", "Hidden Passage"], "evidence": "Lounge Evidence", "fixed": 1},
+		{"from": "Conductor's Car", "to": "Conductor's Car Interrogation", "rule": ["Blowdart", "Broken Robot Arm", "Blueprints"], "evidence": "Conductor's Car Evidence", "fixed": 1}
 	],
 	"rooms": [
 		{"name": "Dining Car", "type": "car", "env": "Prologue", "checks": [
@@ -257,21 +265,21 @@
 			{"name": "Distract using Claw Machine", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt3.0.c-0"]},
 			{"name": "Distract using Poker Chips", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt3.0.c-1"]},
 			{"name": "Distract using Wife and Kids", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt3.0.c-2"]},
-			{"name": "Access Card Choice 0", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt4.0.c-0"], "death": "true"},
-			{"name": "Access Card Choice 1", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt4.0.c-1"], "death": "true"},
-			{"name": "Access Card Choice 2", "sanity": "deduct", "dialog": ["Casino.Heist_Planning_Pt4.0.c-2"], "death": "false"},
-			{"name": "Blaze Extraction Choice 0", "sanity": "deduct", "dialog": ["Casino.Heist_Planning_Pt5.0.c-0"], "death": "false"},
-			{"name": "Blaze Extraction Choice 1", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt5.0.c-1"], "death": "true"},
-			{"name": "Blaze Extraction Choice 2", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt5.0.c-2"], "death": "true"},
-			{"name": "Celebration Choice 0", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt6.0.c-0"]},
-			{"name": "Celebration Choice 1", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt6.0.c-1"]},
-			{"name": "Celebration Choice 2", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt6.0.c-2"]},
-			{"name": "Mechanical Arms Choice 0", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt7.0.c-0"], "death": "true"},
-			{"name": "Mechanical Arms Choice 1", "sanity": "deduct", "dialog": ["Casino.Heist_Planning_Pt7.0.c-1"], "death": "false"},
-			{"name": "Mechanical Arms Choice 2", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt7.0.c-2"], "death": "true"},
-			{"name": "Tails Taking Too Long Choice 0", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt8.0.c-0"]},
-			{"name": "Tails Taking Too Long Choice 1", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt8.0.c-1"]},
-			{"name": "Tails Taking Too Long Choice 2", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt8.0.c-2"]},
+			{"name": "Access Card Choice 1", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt4.0.c-0"], "death": "true"},
+			{"name": "Access Card Choice 2", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt4.0.c-1"], "death": "true"},
+			{"name": "Access Card Choice 3", "sanity": "deduct", "dialog": ["Casino.Heist_Planning_Pt4.0.c-2"], "death": "false"},
+			{"name": "Blaze Extraction Choice 1", "sanity": "deduct", "dialog": ["Casino.Heist_Planning_Pt5.0.c-0"], "death": "false"},
+			{"name": "Blaze Extraction Choice 2", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt5.0.c-1"], "death": "true"},
+			{"name": "Blaze Extraction Choice 3", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt5.0.c-2"], "death": "true"},
+			{"name": "Celebration Choice 1", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt6.0.c-0"]},
+			{"name": "Celebration Choice 2", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt6.0.c-1"]},
+			{"name": "Celebration Choice 3", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt6.0.c-2"]},
+			{"name": "Mechanical Arms Choice 1", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt7.0.c-0"], "death": "true"},
+			{"name": "Mechanical Arms Choice 2", "sanity": "deduct", "dialog": ["Casino.Heist_Planning_Pt7.0.c-1"], "death": "false"},
+			{"name": "Mechanical Arms Choice 3", "sanity": "incorrect", "dialog": ["Casino.Heist_Planning_Pt7.0.c-2"], "death": "true"},
+			{"name": "Tails Taking Too Long Choice 1", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt8.0.c-0"]},
+			{"name": "Tails Taking Too Long Choice 2", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt8.0.c-1"]},
+			{"name": "Tails Taking Too Long Choice 3", "sanity": "missable", "dialog": ["Casino.Heist_Planning_Pt8.0.c-2"]},
 
 			{"name": "Game Choice 1", "sanity": "dialog", "dialog": ["Casino.Poker_Table.0.c-0"]},
 			{"name": "Game Choice 2", "sanity": "dialog", "dialog": ["Casino.Poker_Table.0.c-1"]},
@@ -405,7 +413,7 @@
 				"Conductor_Car.Interrogation_Part3.0.g-0.38", "Conductor_Car.Interrogation_Part3_Choose_Evidence.1.b.13"
 			], "death": "blowdart"},
 			{"name": "What should we take a closer look at?", "sanity": "deduct", "dialog": [
-				"Conductor_Car.Interrogation_Part4.158", "Conductor_Car.Interrogation_Part4_Choose_evidence.1.b.13"
+				"Conductor_Car.Interrogation_Part4.158", "Conductor_Car.Interrogation_Part4_Choose_Evidence.1.b.13"
 			], "death": "blueprints"},
 			{"name": "How could Sonic fit through?", "sanity": "deduct", "dialog": [
 				"Conductor_Car.Interrogation_Part5.181", "Conductor_Car.Interrogation_Part5_Choose_Evidence.1.b.13"

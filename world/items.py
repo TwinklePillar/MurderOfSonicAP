@@ -5,6 +5,7 @@ class ItemType(Enum):
 	progression = 0
 	filler = 1
 	car = 2
+	evidence = 3
 
 from .apshared import apshared, item_name_to_id
 

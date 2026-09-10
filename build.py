@@ -6,17 +6,10 @@ import json
 os.system("clear")
 
 '''
-Overhauled connection. You can now enter connection info from the main menu and have a stable save throughout the AP
-The save menu has been massively expanded
-Car Select now uses the Save/Load UI
-Car Select now loads from a known stable state
-The name entry now autofills to the slot name
-Added a close dialog button
-Death Link and Autoskip Dialog have been moved to the in-game options screen
-Added Entrance Rando - The exit from each car now leads into a random car
-Split the runner sections into its own option
-Added options for multiple copies of inventory items or cars
-Fixed an inventory bug that required reconnecting to work around
+Fix the "What should we take a closer look at?" location not sending after failure
+Fix location names in Casino Part 1
+Add close dialog button reminder when loading the Casino car
+Renamed "Shelf Crack" to "Crack on Shelf"
 '''
 
 SPARKDIR = "tmosthdir"
