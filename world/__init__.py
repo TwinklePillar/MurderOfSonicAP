@@ -1,4 +1,5 @@
 from worlds.AutoWorld import World
+from Options import OptionError
 
 from .items import ItemState
 from .locations import LocationState
@@ -17,6 +18,8 @@ class TMOSTHWorld(World):
 
 	options_dataclass = TMOSTHOptions
 	options: TMOSTHOptions
+
+	item_state = ItemState()
 	
 	def generate_early(self):
 		self.location_state = LocationState()
@@ -51,6 +54,20 @@ class TMOSTHWorld(World):
 			self.location_state.sanities = slot_data["sanities"]
 			self.location_state.er_regions = slot_data["entrances"]
 			self.location_state.regen = True
+			return
+
+		location_count = 84
+		item_count = self.inv_dupe * 14
+		if self.car_rando:
+			item_count += self.car_dupe * 7
+
+		if self.options.runner_sanity: location_count += 24
+		if self.options.choice_sanity: location_count += 76
+		if self.options.choice_sanity == 2: location_count += 64
+		if self.options.deduction_sanity: location_count += 31
+		if self.options.deduction_sanity == 2: location_count += 54
+
+		if item_count > location_count: raise OptionError("Inventory Dupe or Car Dupe is too high!")
 
 	def create_regions(self):
 		self.location_state.setup_regions(self)

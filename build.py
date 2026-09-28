@@ -10,6 +10,9 @@ Fix the "What should we take a closer look at?" location not sending after failu
 Fix location names in Casino Part 1
 Add close dialog button reminder when loading the Casino car
 Renamed "Shelf Crack" to "Crack on Shelf"
+Added a car select button to the HUD
+The game automatically loads into a car after save file select if Car Rando is enabled
+Added a hint game mode, connect to any slot and complete running sections for hints
 '''
 
 SPARKDIR = "tmosthdir"
@@ -30,7 +33,8 @@ COMMANDBASE = [
 INCLUDE_MANAGED = [
 	"Assembly-CSharp.dll", "UnityEngine.dll", "UnityEngine.CoreModule.dll", "netstandard",
 	"Unity.TextMeshPro.dll", "UnityEngine.UI.dll", "Ink-Libraries.dll", "UnityEngine.UIModule.dll",
-	"UnityEngine.InputLegacyModule", "UnityEngine.TextRenderingModule.dll"
+	"UnityEngine.InputLegacyModule", "UnityEngine.TextRenderingModule.dll", "UnityEngine.ImageConversionModule.dll",
+	"Unity.Addressables.dll", "Unity.ResourceManager.dll"
 ]
 
 ITEM_BASE = 2324655000

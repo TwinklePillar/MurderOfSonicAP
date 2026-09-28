@@ -342,6 +342,40 @@ namespace tmosthap {
 				text.alignment = TextAnchor.MiddleCenter;
 				text.resizeTextForBestFit = true;
 				text.fontSize = 1000;
+
+				GameObject hintButtonBacking = new GameObject("Manual Connect Button Backing", typeof(RectTransform));
+				GameObject hintButton = new GameObject("Manual Connect Button", typeof(Button), typeof(Image), typeof(AutoResize));
+				hintButton.transform.SetParent(hintButtonBacking.transform, false);
+				hintButtonBacking.transform.SetParent(connectWindow.transform);
+				Image hintButtonImage = hintButton.GetComponent<Image>();
+				hintButton.GetComponent<AutoResize>().scale = new Vector2(0.8f, 1);
+				hintButtonImage.sprite = wndImage.sprite;
+				
+				hintButtonImage.color = new Color(0.75f, 0.75f, 0.75f);
+				hintButtonImage.type = Image.Type.Sliced;
+				hintButtonImage.pixelsPerUnitMultiplier = 3;
+				Button hintBtn = hintButton.GetComponent<Button>();
+				hintBtn.image = hintButtonImage;
+				hintBtn.onClick.AddListener(() => {
+					APConnectionInfo connect = new APConnectionInfo();
+					connect.ip = connectInfo[0].text;
+					connect.port = Int32.Parse(connectInfo[1].text);
+					connect.slot = connectInfo[2].text;
+					connect.password = connectInfo[3].text;
+					connect.info = connectInfo[4].text;
+					ModMain.ConnectAsHintGame(connect);
+				});
+				GameObject hintButText = new GameObject("Manual Connect Text", typeof(Text), typeof(AutoResize));
+				hintButText.transform.parent = hintButton.transform;
+				hintButText.transform.localScale = Vector3.one;
+				hintButText.transform.localPosition = Vector3.zero;
+				text = hintButText.GetComponent<Text>();
+				text.GetType().GetMethod("AssignDefaultFont", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(text, new object[]{});
+				text.text = "Connect as Hint Game";
+				text.fontStyle = FontStyle.Bold;
+				text.alignment = TextAnchor.MiddleCenter;
+				text.resizeTextForBestFit = true;
+				text.fontSize = 1000;
 			}
 		}
 
@@ -369,6 +403,7 @@ namespace tmosthap {
 		private class EnvironmentPatch {
 			private static bool Prefix(Dictionary<string, object> message) {
 				string fromEnv = GameManager.Instance.GetEnvironmentName();
+				if (HintMode.enabled) return true;
 				if (ModMain.currentSession == null) return false;
 				if (SlotData.entrances.Contains(fromEnv) && ((string)message["DestinationKey"] != "SafeRoom") && !isLoading) {
 					message["DestinationKey"] = SlotData.entrances[SlotData.entrances.IndexOf(fromEnv)+1];
@@ -399,6 +434,7 @@ namespace tmosthap {
 			if (envDirty) {
 				envDirty = false;
 				string curEnv = GameManager.Instance.GetEnvironmentName();
+				if (curEnv == "") return;
 				List<string> seenEnvs = file.saves[ModMain.curSlot].seenEnvs;
 				bool seenEnv = false;
 				foreach (string env in seenEnvs) {
@@ -490,6 +526,27 @@ namespace tmosthap {
 							GameManager.Instance.StartNewGame();
 							file.saves[index].curSave = createSaveState();
 							saveAPSave();
+							if (SlotData.carRando) {
+								List<string> hasCars = new List<string>();
+								foreach (APItem item in APShared.items) {
+									if (ModMain.itemState[(ItemIds)item.id] > 0) hasCars.Add(item.env);
+								}
+								foreach (string key in SaveStates.states.Keys) {
+									bool hasCar = file.saves[ModMain.curSlot].seenEnvs.Contains(key) || hasCars.Contains(key);
+									if (hasCar) {
+										SaveData state = SaveStates.states[key];
+										state.GameState.playerName = file.saves[ModMain.curSlot].quickConnect.slot;
+										SaveDataManager.Instance.LoadFile(new SaveData{
+											SaveTime = "",
+											StoryState = hasCar ? state.StoryState : null,
+											StageStage = state.StageStage,
+											GameState = state.GameState,
+											AudioState = state.AudioState,
+											DialogState = state.DialogState
+										});
+									}
+								}
+							}
 						}
 					}) + onClick;
 				}

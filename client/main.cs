@@ -48,6 +48,17 @@ namespace tmosthap {
 		static bool invDirty;
 		static bool deathlinkPending;
 		
+		public static string getAssetPath(string path) {
+			return System.IO.Path.Combine(Application.dataPath, "../Mods/APTMOSTH_assets", path);
+		}
+		
+		void loadTexture(ref Texture2D tex, string path) {
+			tex = new Texture2D(1, 1);
+			tex.hideFlags = HideFlags.DontUnloadUnusedAsset;
+			byte[] bytes = System.IO.File.ReadAllBytes(getAssetPath(path));
+			ImageConversion.LoadImage(tex, bytes);
+		}
+		
 		public override void OnInitializeMelon() {
 			MelonPreferences.CreateCategory("Archipelago");
 			
@@ -109,6 +120,25 @@ namespace tmosthap {
 				GameManager.Instance.EndConversation();
 			});
 
+			GameObject hud = GameObject.Find("Canvas/HUD");
+			GameObject menuButton = hud.transform.GetChild(0).gameObject;
+			GameObject invButton = hud.transform.GetChild(2).gameObject;
+			GameObject carSelectButton = GameObject.Instantiate(menuButton, hud.transform, false);
+			Component.Destroy(carSelectButton.GetComponent<TriggerEmptyEvent>());
+			carSelectButton.transform.position = invButton.transform.position + (invButton.transform.position - menuButton.transform.position);
+
+			Button carButton = carSelectButton.GetComponent<Button>();
+			carButton.onClick.AddListener(() => {
+				APTitle.openCarSelect();
+			});
+
+			Texture2D tex = null;
+			loadTexture(ref tex, "car.png");
+			Image carImage = carSelectButton.transform.Find("AnimAnchor/Backing/Icon").GetComponent<Image>();
+			carImage.sprite = Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(tex.width/2, tex.height/2));
+
+			HintMode.OnSceneLoad();
+			
 			EventManager.StartListening("MinigameFinished", playerDiedListener);
 			EventManager.StartListening("RunnerPlayerDied", playerDiedListener);
 		}
@@ -229,30 +259,6 @@ namespace tmosthap {
 			
 			if (Input.GetKeyDown(KeyCode.BackQuote)) {
 				APTitle.openCarSelect();
-			/*
-				Transform rooms = GameObject.Find("Canvas/DebugMapScreen/WindowRoot").transform;
-				List<string> envs = APTitle.file.saves[curSlot].seenEnvs;
-				List<string> hasCars = new List<string>();
-				foreach (APItem item in APShared.items) {
-					if (itemState[(ItemIds)item.id] > 0) hasCars.Add(item.env);
-				}
-				for (int i = 0; i < rooms.childCount; i++) {
-					GameObject room = rooms.GetChild(i).gameObject;
-					ChangeEnvironmentButton ceb = room.GetComponent<ChangeEnvironmentButton>();
-					if (ceb == null) {
-						room.SetActive(false);
-						continue;
-					}
-					FieldInfo fi = ceb.GetType().GetField("Destination", BindingFlags.NonPublic | BindingFlags.Instance);
-					string dest = (string)fi.GetValue(ceb);
-					bool hasString = hasCars.Contains(dest);
-					foreach (string env in envs) {
-						if (env == dest) hasString = true;
-					}
-					room.SetActive(hasString);
-				}
-				EventManager.TriggerEvent("ToggleMap", null);
-			*/
 			}
 		}
 
@@ -267,7 +273,7 @@ namespace tmosthap {
 			if (currentSession != null) {
 				currentSession.Items.ItemReceived -= HandleItem;
 				currentSession.MessageLog.OnMessageReceived -= OnMessageReceived;
-				deathLink.DisableDeathLink();
+				if (deathLink != null) deathLink.DisableDeathLink();
 				currentSession.Socket.DisconnectAsync();
 				currentSession = null;
 				deathLink = null;
@@ -291,7 +297,7 @@ namespace tmosthap {
 					string msg = string.Format("Client Version does not match APWorld (expected {0}, got {1})! Refusing connection", APShared.version, slotDataDict["version"]);
 					MelonLogger.Error(msg);
 					messages.Enqueue(msg);
-					currentSession = null;
+					DisconnectFromArchipelago();
 					return;
 				}
 
@@ -327,6 +333,26 @@ namespace tmosthap {
 				} else {
 					SaveDataManager.Instance.LoadFile(APTitle.file.saves[i].curSave);
 				}
+			} else {
+				MelonLogger.Error("Error while connecting to Archipelago");
+				messages.Enqueue("Error while connecting to Archipelago");
+				foreach(string e in ((LoginFailure)result).Errors) {
+					MelonLogger.Error(e);
+					messages.Enqueue(e);
+				}
+				currentSession = null;
+			}
+		}
+
+		public static void ConnectAsHintGame(APConnectionInfo connect) {
+			ModMain.DisconnectFromArchipelago();
+			
+			currentSession = ArchipelagoSessionFactory.CreateSession(connect.ip, connect.port);
+			LoginResult result = currentSession.TryConnectAndLogin("", connect.slot, ItemsHandlingFlags.AllItems, password: connect.password, tags: new string[]{"HintGame"});
+			
+			if (result.Successful) {
+				currentSession.MessageLog.OnMessageReceived += OnMessageReceived;
+				HintMode.OnHintConnect();
 			} else {
 				MelonLogger.Error("Error while connecting to Archipelago");
 				messages.Enqueue("Error while connecting to Archipelago");
@@ -413,6 +439,7 @@ namespace tmosthap {
 		
 		public static bool isDeathLink = false;
 		public static void sendDeathLink(string source) {
+			if (curSlot == -1) return;
 			string cause = string.Format("{0} {1}", APTitle.file.saves[curSlot].quickConnect.slot, source);
 			if (deathLink != null && APTitle.file.client.deathLink && !isDeathLink) {
 				deathLink.SendDeathLink(new DeathLink(APTitle.file.saves[curSlot].quickConnect.slot, cause));

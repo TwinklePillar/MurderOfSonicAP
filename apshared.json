@@ -27,15 +27,7 @@
 		
 		{"name": "Chili Dog", "itemtype": "filler"},
 		{"name": "Ramen", "itemtype": "filler"},
-		{"name": "Chicken Cordon Bleu", "itemtype": "filler"},
-		{"name": "Progressive Nothing", "itemtype": "filler"},
-
-		{"name": "Dining Car Evidence", "itemtype": "evidence", "evidence": ["vectorticket"]},
-		{"name": "Dining Closet Evidence", "itemtype": "evidence", "evidence": ["crackonshelf", "stick"]},
-		{"name": "Saloon Evidence", "itemtype": "evidence", "evidence": ["usedcups", "smashedarcade"]},
-		{"name": "Library Evidence", "itemtype": "evidence", "evidence": ["shadowslock", "mirageexpressmanual", "librarymap"]},
-		{"name": "Lounge Evidence", "itemtype": "evidence", "evidence": ["crumpledpaper", "hiddenpassage", "keyring"]},
-		{"name": "Conductor's Car Evidence", "itemtype": "evidence", "evidence": ["blowdart", "blueprints", "brokenrobotarm"]}
+		{"name": "Chicken Cordon Bleu", "itemtype": "filler"}
 	],
 	"connections": [
 		{"from": "Menu", "to": "Dining Car", "rule": [], "car_rando": 1},
@@ -49,7 +41,7 @@
 		{"from": "Lockdown", "to": "Final Push", "rule": []},
 
 		{"from": "Dining Car", "to": "Dining Car Interlude", "rule": ["Vector's Ticket"], "evidence": "Dining Car Evidence", "fixed": 1},
-		{"from": "Dining Closet", "to": "Dining Closet Interrogation", "rule": ["Shelf Crack", "Stick"], "evidence": "Dining Closet Evidence", "fixed": 1},
+		{"from": "Dining Closet", "to": "Dining Closet Interrogation", "rule": ["Crack on Shelf", "Stick"], "evidence": "Dining Closet Evidence", "fixed": 1},
 		{"from": "Saloon", "to": "Saloon Interrogation", "rule": ["Used Cups", "Smashed Arcade"], "evidence": "Saloon Evidence", "fixed": 1},
 		{"from": "Library", "to": "Library Interrogation", "rule": ["Mirage Express Manual", "Shadow's Lock", "Library Map"], "evidence": "Library Evidence", "fixed": 1},
 		{"from": "Casino", "to": "Safe Room", "rule": [], "fixed": 1},

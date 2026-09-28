@@ -19,7 +19,7 @@ namespace tmosthap {
 		[HarmonyPatch(typeof(TrackManager), "WinCoroutine")]
 		private class RunnerPatch {
 			private static void Prefix(RunnerGameManager __instance, bool ___endCoroutineRunning, RunnerLevelData ____levelData) {
-				if (!___endCoroutineRunning) {
+				if (ModMain.curSlot != -1 && !___endCoroutineRunning) {
 					MelonLogger.Msg("Sending Check for Runner {0}", ____levelData.databaseID);
 					sendLocation("run", ____levelData.databaseID);
 					if (____levelData.databaseID == 31) {

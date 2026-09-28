@@ -57,7 +57,7 @@ class CarDupe(Range):
 	display_name = "Car Duplicates"
 
 	range_start = 1
-	range_end = 50
+	range_end = 20
 
 	default = 1
 
@@ -68,7 +68,7 @@ class InvDupe(Range):
 	display_name = "Inventory Duplicates"
 
 	range_start = 1
-	range_end = 50
+	range_end = 20
 
 	default = 1
 
