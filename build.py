@@ -13,6 +13,7 @@ Renamed "Shelf Crack" to "Crack on Shelf"
 Added a car select button to the HUD
 The game automatically loads into a car after save file select if Car Rando is enabled
 Added a hint game mode, connect to any slot and complete running sections for hints
+Fixed items sometimes not appearing in the inventory
 '''
 
 SPARKDIR = "tmosthdir"
@@ -37,8 +38,8 @@ INCLUDE_MANAGED = [
 	"Unity.Addressables.dll", "Unity.ResourceManager.dll"
 ]
 
-ITEM_BASE = 2324655000
-LOCATION_BASE = 2324650000
+ITEM_BASE = 1
+LOCATION_BASE = 1
 
 with open("apshared.json") as apfile:
 	shared = json.load(apfile)

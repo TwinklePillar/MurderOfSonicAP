@@ -72,6 +72,17 @@ class InvDupe(Range):
 
 	default = 1
 
+class TrapChance(Range):
+	"""
+	What should the chance be of a filler item becoming a trap?
+	"""
+	display_name = "Trap Chance"
+
+	range_start = 0
+	range_end = 100
+
+	default = 5
+
 @dataclass
 class TMOSTHOptions(PerGameCommonOptions):
 	progression_mode: ProgressionMode
@@ -80,4 +91,5 @@ class TMOSTHOptions(PerGameCommonOptions):
 	choice_sanity: DialogSanity
 	deduction_sanity: DeductionSanity
 	runner_sanity: RunnerSanity
+#	trap_chance: TrapChance
 

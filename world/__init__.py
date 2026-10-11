@@ -42,7 +42,8 @@ class TMOSTHWorld(World):
 			self.location_state.sanities.append("deduct")
 		if self.options.deduction_sanity.value == 2:
 			self.location_state.sanities.append("incorrect")
-		
+
+	#	self.item_state.trap_chance = self.options.trap_chance.value
 		self.inv_dupe = self.options.inv_dupe.value
 		self.car_dupe = self.options.car_dupe.value
 		

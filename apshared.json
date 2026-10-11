@@ -1,5 +1,5 @@
 {
-	"version": 2,
+	"version": 3,
 	"game": "The Murder of Sonic the Hedgehog",
 	"items": [
 		{"name": "Crack on Shelf", "itemtype": "progression", "inventory": "crackonshelf"},
@@ -27,7 +27,14 @@
 		
 		{"name": "Chili Dog", "itemtype": "filler"},
 		{"name": "Ramen", "itemtype": "filler"},
-		{"name": "Chicken Cordon Bleu", "itemtype": "filler"}
+		{"name": "Chicken Cordon Bleu", "itemtype": "filler"},
+		{"name": "A Picture of Sonic Singing a Song", "itemtype": "filler"},
+		{"name": "A Picture of Sonic Rowing a Boat", "itemtype": "filler"},
+
+		{"name": "Dead Trap", "itemtype": "trap"},
+		{"name": "Faker Trap", "itemtype": "trap"},
+		{"name": "Music Trap", "itemtype": "trap"},
+		{"name": "Think Trap", "itemtype": "trap"}
 	],
 	"connections": [
 		{"from": "Menu", "to": "Dining Car", "rule": [], "car_rando": 1},

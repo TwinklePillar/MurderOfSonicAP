@@ -13,7 +13,7 @@
     # expression:excited
     # move:tails to:middle from:rightmiddle
     Tails:: It's time to THINK!
-    >>>>StartFinalPushMinigame(1, HintGame.RandomHintCharacter)
+    >>>>StartFinalPushMinigame(1, HintGame.ToNextHintgame)
     -> DONE
     = RandomMusic
         {shuffle:
@@ -51,13 +51,15 @@
         >>>>PlayStorySFX(traindoorbreak1)
         >>>>StageShowImage(standalonecomics, finalpushdoor1)
         >>>>PlayStorySFX(traindoorbreakjustbreak)
+        >>>>ScreenShake(90, 90)
         >>>>StageShowImage(standalonecomics, finalpushdoor2)
         >>>>StageHideImage(standalonecomics)
         >>>>StopMusic(0.5)
+    /*
         {shuffle:
             - -> HintAmy ->
             - -> HintBlaze ->
-        /*    - -> HintConductor ->
+            - -> HintConductor ->
             - -> HintEspio ->
             - -> HintKnuckles ->
             - -> HintRouge ->
@@ -65,10 +67,20 @@
             - -> HintSonic ->
             - -> HintTails ->
             - -> HintVector ->
-        */
         }
+    */
         -> RandomMusic ->
-        >>>>StartFinalPushMinigame(0, HintGame.RandomHintCharacter)
+        ->->
+    = ToNextHintgame
+        >>>>Hold(1)
+        {cycle:
+            -
+            -
+            -
+            -
+            - -> RandomHintCharacter ->
+        }
+        >>>>StartFinalPushMinigame(0, HintGame.ToNextHintgame)
         -> DONE
     = HintAmy
         # move:amy from:offstageleft to:middle
@@ -95,6 +107,15 @@
         >>>>Hold(0.5)
         ->->
     = HintConductor
+        # move:conductor from:offstageleft to:middle
+        # expression:welcoming
+        Conductor:: What a fine hint!
+        # expression:laughing
+        Conductor:: I hope the next one is better!
+        # face:right
+        >>>>Hold(0.25)
+        # move:conductor from:middle to:offstageright
+        >>>>Hold(0.5)
         ->->
     = HintEspio
         ->->
@@ -111,8 +132,90 @@
     = HintVector
         ->->
 
-=== SonicTrap ===
+=== ReturnToNoDialog ===
+	>>>EndConversation()
+	-> DONE
+
+=== DeadTrap ===
+    Barry:: So how's the sync going?
+    # exit:all
+    # enter:sonic
+    # stage:middle
+    # expression:winking
+    Sonic:: I'm feeling fine, don't worry about me
+    # expression:determined
+    Sonic:: It's just a small poke with a blowdart
+    # expression:panicking
+    >>>>Hold(1)
+    # expression:embarrassed
+    >>>>Hold(1)
+    # expression:injured
+    >>>>Hold(1)
+    # exit:sonic
+    >>>>Hold(1)
+    >>>>StageShowImage(DeadSonic, deadsonic)
+    Barry:: SONIC!!!
+    >>>>StageHideImage(DeadSonic)
+    Barry:: I guess that means we need to solve the case of
+    >>>>FadeOutDialogAndHUD(1)
+    >>>>Hold(1)
+    >>>>StageShowImage(inlinecomics, titlecard, 1)
+    >>>>Hold(2)
+    >>>>StageHideImage(inlinecomics)
+    >>>>ReturnFromTrap()
     -> DONE
 
-=== LiteratureTrap ===
+=== FakerTrap ===
+    Barry:: So how's the sync going?
+    # exit:all
+    # enter:sonic
+    # move:sonic from:offstageleft to:left
+    # expression:happy
+    # face:right
+    Sonic:: Phew, so far so good!
+    # expression:mad
+    Sonic:: Hey, that's...
+    # enter:shadow
+    # move:shadow from:offstageright to:right
+    # expression:grumpy
+    Shadow:: That blue hedgehog again, of all places...
+    Sonic:: I found you, FAKER!
+    # expression:talking
+    Shadow:: Faker? I think YOU'RE the fake hedgehog around here.
+    # expression:embarrassed
+    Shadow:: You're comparing yourself to me?
+    # expression:tsundere
+    Shadow:: Hah, you aren't even good enough to be my fake
+    # expression:upset
+    Sonic:: I'll make you eat those words!
+    # move:sonic from:left to:middle
+    # move:shadow from:right to:middle
+    >>>>FadeToWhite(0.25)
+    # exit:allinstant
+    >>>>Hold(1)
+    >>>>FadeFromWhite(1)
+    >>>>ReturnFromTrap()
     -> DONE
+
+=== ThinkTrap ===
+    Barry:: So how's the sync going?
+    Barry:: I'm starting to zone out, losing my train of thought
+    Barry:: What's being said here again?
+    -> StartThink
+    = StartThink
+        ~ temp rng = RANDOM(18, 30)
+        {rng == 19: -> StartThink}
+        {rng == 24: -> StartThink}
+        {rng == 28: -> StartThink}
+        >>>>StartMinigame({rng},ThinkTrap.PostThink)
+        -> PostThink("False")
+    = PostThink(playerWon)
+        -> HintGame.RandomMusic ->
+        {playerWon != "True":
+            Barry:: Let me try that again
+            -> StartThink
+        }
+        Barry:: Yep, back on track now!
+        Barry:: Wait, the conversation is over?
+        >>>>ReturnFromTrap()
+        -> DONE

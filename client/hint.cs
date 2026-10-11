@@ -30,14 +30,23 @@ namespace tmosthap {
 		public static Ink.Runtime.Story apStory;
 		public static System.Random rng;
 		public static List<ScoutedLocation> locations;
+		public static int numComplete;
 		
 		public static List<RunnerLevelData> hintRunners;
+		public static List<Material> hintMat1;
+		public static List<Material> hintMat2;
+		public static List<UnityEngine.Color> hintCol1;
+		public static List<UnityEngine.Color> hintCol2;
 
 		[HarmonyPatch(typeof(RunnerGameManager), "Start")]
 		private static class ManagerStartPatch {
 			private static void Prefix(RunnerGameManager __instance, RunnerLevelsDB ___levelsDB) {
 				MelonLogger.Msg("Level Names:");
 				hintRunners = new List<RunnerLevelData>();
+				hintMat1 = new List<Material>();
+				hintMat2 = new List<Material>();
+				hintCol1 = new List<UnityEngine.Color>();
+				hintCol2 = new List<UnityEngine.Color>();
 				int[] allowedRunners = {5,6,4,9,7,10,11,12,13,15,14,32,28,33,18,20,29,21,22,23,25,26,27,30,31};
 				foreach (RunnerLevelData level in ___levelsDB.levels) {
 					MelonLogger.Msg("\t{0}: {1}", level.databaseID, level.name);
@@ -45,6 +54,10 @@ namespace tmosthap {
 						RunnerLevelData rld = new RunnerLevelData(level);
 						rld.databaseID = -1;
 						hintRunners.Add(rld);
+						hintMat1.Add(level.backgroundMaterial1);
+						hintMat2.Add(level.backgroundMaterial2);
+						hintCol1.Add(level.tileColor1);
+						hintCol2.Add(level.tileColor2);
 					}
 				}
 			}
@@ -126,6 +139,26 @@ namespace tmosthap {
 			}
 		}
 
+		[HarmonyPatch(typeof(InkParser), "ParseAsFunction")]
+		private static class InkParsePatch {
+			private static void Prefix(string text) {
+				text = text.Replace(">>>>", "");
+				string[] array = text.Split(new char[]{'('});
+				if (array.Length != 0) {
+				//	string text2 = "";
+					if (array.Length > 1) {
+						array[1] = array[1].Replace(")", "");
+				//		text2 = array[1].Trim();
+					}
+					switch (array[0].Trim()) {
+						case "ReturnFromTrap":
+							ModMain.returnFromTrap();
+							break;
+					}
+				}
+			}
+		}
+
 		public static void OnSceneLoad() {
 			apStory = (new Ink.Compiler(System.IO.File.ReadAllText(ModMain.getAssetPath("archipelago.ink")))).Compile();
 
@@ -134,6 +167,7 @@ namespace tmosthap {
 			Ink.Runtime.Story mainStory = StoryManager.Instance.story;
 			mainStory.mainContentContainer.content.AddRange(apStory.mainContentContainer.content);
 			foreach (Ink.Runtime.INamedContent item in apStory.mainContentContainer.namedContent.Values) {
+				if (item.name == "global decl") continue;
 				((Ink.Runtime.Object)item).parent = mainStory.mainContentContainer;
 				mainStory.mainContentContainer.namedContent[item.name] = item;
 				mainStory.mainContentContainer.namedOnlyContent[item.name] = (Ink.Runtime.Object)item;
@@ -142,6 +176,7 @@ namespace tmosthap {
 
 		public static void OnHintConnect() {
 			locations = new List<ScoutedLocation>();
+			numComplete = 0;
 			List<long> toScout = new List<long>();
 			Hint[] hints = ModMain.currentSession.Hints.GetHints();
 			foreach (long location in ModMain.currentSession.Locations.AllMissingLocations) {
@@ -207,6 +242,12 @@ namespace tmosthap {
 			int id = (int)message["levelID"];
 			RunnerLevelData runnerLevelData;
 			runnerLevelData = HintMode.hintRunners[HintMode.rng.Next(HintMode.hintRunners.Count())];
+			int matidx = HintMode.rng.Next(HintMode.hintMat1.Count());
+			int colidx = HintMode.rng.Next(HintMode.hintCol1.Count());
+			runnerLevelData.backgroundMaterial1 = HintMode.hintMat1[matidx];
+			runnerLevelData.backgroundMaterial2 = HintMode.hintMat2[matidx];
+			runnerLevelData.tileColor1 = HintMode.hintCol1[colidx];
+			runnerLevelData.tileColor2 = HintMode.hintCol2[colidx];
 			debugLevelNameText.text = "Level: " + runnerLevelData.name;
 			if (!initialized) {
 				Init(runnerLevelData);
@@ -257,21 +298,24 @@ namespace tmosthap {
 			if (flag) {
 				Time.timeScale = 1f;
 				GameManager.Instance.ResumeConversationFromMinigame(flag);
-
-				List<long> locationScout = new List<long>();
-				foreach (HintMode.ScoutedLocation location in HintMode.locations) {
-					if ((location.flags & ItemFlags.Advancement) != 0) locationScout.Add(location.id);
-					else if ((location.flags & ItemFlags.NeverExclude) != 0) for (int i = 0; i < 2; i++) locationScout.Add(location.id);
-					else for (int i = 0; i < 5; i++) locationScout.Add(location.id);
+				HintMode.numComplete += 1;
+				if (HintMode.numComplete == 5) {
+					HintMode.numComplete = 0;
+					List<long> locationScout = new List<long>();
+					foreach (HintMode.ScoutedLocation location in HintMode.locations) {
+						if ((location.flags & ItemFlags.Advancement) != 0) locationScout.Add(location.id);
+						else if ((location.flags & ItemFlags.NeverExclude) != 0) for (int i = 0; i < 2; i++) locationScout.Add(location.id);
+						else for (int i = 0; i < 5; i++) locationScout.Add(location.id);
+					}
+					long toScout = locationScout[HintMode.rng.Next(locationScout.Count())];
+					int idx = 0;
+					foreach (HintMode.ScoutedLocation location in HintMode.locations) {
+						if (location.id == toScout) break;
+						idx += 1;
+					}
+					HintMode.locations.RemoveAt(idx);
+					ModMain.currentSession.Hints.CreateHints(ModMain.currentSession.ConnectionInfo.Slot, locationIds: new long[]{toScout});
 				}
-				long toScout = locationScout[HintMode.rng.Next(locationScout.Count())];
-				int idx = 0;
-				foreach (HintMode.ScoutedLocation location in HintMode.locations) {
-					if (location.id == toScout) break;
-					idx += 1;
-				}
-				HintMode.locations.RemoveAt(idx);
-				ModMain.currentSession.Hints.CreateHints(ModMain.currentSession.ConnectionInfo.Slot, locationIds: new long[]{toScout});
 			} else {
 				runnerGameController.RestartFinalPushLevel();
 			}

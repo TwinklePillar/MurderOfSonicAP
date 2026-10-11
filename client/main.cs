@@ -33,7 +33,6 @@ namespace tmosthap {
 		public static int curSlot = -1;
 		public static DeathLinkService deathLink;
 		static Dictionary<string, object> slotDataDict;
-		public static Dictionary<ItemIds, int> itemState;
 
 		class DisplayedMessage {
 			public GameObject go;
@@ -43,8 +42,9 @@ namespace tmosthap {
 		public static Queue<string> messages;
 
 		public static GameObject inventoryListener;
+		static GameObject closeButton;
 
-		static int lastItem;
+		public static int lastItem;
 		static bool invDirty;
 		static bool deathlinkPending;
 		
@@ -64,7 +64,6 @@ namespace tmosthap {
 			
 			new SlotData();
 			messages = new Queue<string>();
-			itemState = new Dictionary<ItemIds, int>();
 			messageText = new DisplayedMessage[5];
 			for (int i = 0; i < messageText.Length; i++) {
 				messageText[i] = new DisplayedMessage();
@@ -112,7 +111,7 @@ namespace tmosthap {
 			RectTransform itemDetails = (RectTransform)invWndXfrm.Find("ItemDetails");
 			itemDetails.anchoredPosition = itemDetails.anchoredPosition * new Vector2(1.5f, 1);
 
-			GameObject closeButton = invWndXfrm.Find("Close").gameObject;
+			closeButton = invWndXfrm.Find("Close").gameObject;
 			RectTransform arrowXfrm = (RectTransform)((GameObject)DialogView.Instance.GetType().GetField("nextArrow", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(DialogView.Instance)).transform;
 			GameObject dialogClose = GameObject.Instantiate(closeButton, arrowXfrm.parent.parent, false);
 			dialogClose.transform.position = new Vector3(arrowXfrm.position.x, ((RectTransform)arrowXfrm.parent).sizeDelta.y-arrowXfrm.position.y, 0);
@@ -169,6 +168,32 @@ namespace tmosthap {
 			}
 			return false;
 		}
+
+		public static bool hasItem(ItemIds item) {
+			foreach (ItemInfo info in currentSession.Items.AllItemsReceived) {
+				if ((ItemIds)info.ItemId == item) return true;
+			}
+			return false;
+		}
+
+		static string curPath;
+		public static bool inTrap = false;
+		public static void beginTrap(string path) {
+			if (!inTrap) {
+				if (GameManager.Instance.inConversation) curPath = StoryManager.Instance.story.state.currentPathString;
+				else curPath = "ReturnToNoDialog";
+			}
+			inTrap = true;
+			StoryManager.Instance.story.state.callStack.Push(PushPopType.Tunnel);
+			StoryManager.Instance.story.ChoosePathString(path, false);
+			StoryManager.Instance.story.Continue();
+		}
+
+		public static void returnFromTrap() {
+			StoryManager.Instance.story.ChoosePathString(curPath, false);
+			StoryManager.Instance.story.Continue();
+			inTrap = false;
+		}
 		
 		public override void OnUpdate() {
 			foreach (DisplayedMessage dm in messageText) {
@@ -215,7 +240,47 @@ namespace tmosthap {
 			}
 
 			if (currentSession == null) return;
+			if (HintMode.enabled) return;
 
+			if (inTrap) closeButton.SetActive(false);
+			else closeButton.SetActive(true);
+			
+			string[] musicTracks = {
+				"spagonia","mirage_saloon","saloon1","interrogationsaloon",
+				"diningcar1","diningcar2","diningcar3","library1",
+				"interrogationlibrary","casino","whiteboardheist","lounge1",
+				"interrogationlounge","conductorcar1","conductorcar2","interrogationfinal",
+				"conductorcarlockdown","lockdownchase","returntoconductorcar","finalboss",
+				"saferoom1","saferoom2","diningcloset1","interrogationcloset",
+				"messydiningcar1","diningcarlockdown","lockdowncaroptimistic","namingbarry"
+			};
+			while (currentSession.Items.Any()) {
+				int oldIndex = currentSession.Items.Index;
+				ItemInfo item = currentSession.Items.DequeueItem();
+				if (oldIndex <= lastItem) continue;
+				lastItem = oldIndex;
+				MelonLogger.Msg("Receiving Item #{0}", lastItem);
+				invDirty = true;
+				
+				ItemIds itemId = (ItemIds)item.ItemId;
+				switch (itemId) {
+					case ItemIds.DEAD_TRAP:
+						beginTrap("DeadTrap");
+						break;
+					case ItemIds.FAKER_TRAP:
+						beginTrap("FakerTrap");
+						break;
+					case ItemIds.MUSIC_TRAP:
+						AudioManager.Instance.PlayAddressableMusic(musicTracks[HintMode.rng.Next(musicTracks.Count())]);
+						break;
+					case ItemIds.THINK_TRAP:
+						beginTrap("ThinkTrap");
+						break;
+					default:
+						break;
+				}
+			}
+			
 			if (invDirty) {
 				string errMsg = "";
 				switch (rebuildInventory()) {
@@ -266,12 +331,9 @@ namespace tmosthap {
 		public static bool awaitingSlotSelect;
 		public static void DisconnectFromArchipelago() {
 			lastItem = -1;
+			inTrap = false;
 			curSlot = -1;
-			foreach (APItem item in APShared.items) {
-				itemState[(ItemIds)item.id] = 0;
-			}
 			if (currentSession != null) {
-				currentSession.Items.ItemReceived -= HandleItem;
 				currentSession.MessageLog.OnMessageReceived -= OnMessageReceived;
 				if (deathLink != null) deathLink.DisableDeathLink();
 				currentSession.Socket.DisconnectAsync();
@@ -302,26 +364,20 @@ namespace tmosthap {
 				}
 
 				new SlotData(slotDataDict);
-				currentSession.Items.ItemReceived += HandleItem;
 				currentSession.MessageLog.OnMessageReceived += OnMessageReceived;
 				deathLink = DeathLinkProvider.CreateDeathLinkService(currentSession);
 				deathLink.OnDeathLinkReceived += HandleDeathLink;
 				if (APTitle.file.client.deathLink) deathLink.EnableDeathLink();
 				messages.Enqueue("Successful Connection to TMOSTH! You may now collect checks");
 				messages.Enqueue("Press the tilde button (~) to travel to unlocked cars");
-				int i = 0;
-				foreach (ItemInfo item in currentSession.Items.AllItemsReceived) {
-					onItem(item, true);
-					i++;
-				}
-				lastItem = i;
-				while (currentSession.Items.Any()) currentSession.Items.DequeueItem();
-				
+
+				int i;
 				for (i = 0; i < APTitle.file.saves.Length; i++) {
 					APSaveData data = APTitle.file.saves[i];
 					if (data.room == curRoom && data.team == currentSession.ConnectionInfo.Team && data.slot == currentSession.ConnectionInfo.Slot) {
 						curSlot = i;
 						data.quickConnect = connect;
+						lastItem = data.lastItem;
 						break;
 					}
 				}
@@ -410,30 +466,13 @@ namespace tmosthap {
 			inventory.Clear();
 			foreach (APItem item in APShared.items) {
 				if (item.inventory == "") continue;
-				if (!itemState.ContainsKey((ItemIds)item.id)) continue;
-				if (itemState[(ItemIds)item.id] > 0) inventory.AddItem(item.inventory);
+				if (hasItem((ItemIds)item.id)) inventory.AddItem(item.inventory);
 			}
 			return InvErr.Succ;
 		}
 		
-		public static void HandleItem(ReceivedItemsHelper itemHandler) {
-			while (itemHandler.Any()) {
-				int oldIndex = itemHandler.Index;
-				if (oldIndex <= lastItem) continue;
-				ItemInfo item = itemHandler.DequeueItem();
-				lastItem = oldIndex;
-				onItem(item, false);
-			}
-		}
-
-		private static void onItem(ItemInfo item, bool catchup)  {
-			MelonLogger.Msg("Receiving {0} with ID {1}", item.ItemDisplayName, item.ItemId);
-			itemState[(ItemIds)item.ItemId] += 1;
-			invDirty = true;
-		}
-		
 		private static void playerDiedListener(Dictionary<string, object> message) {
-			if (message != null && message.ContainsKey("PlayerWon") && (bool)message["PlayerWon"]) return;
+			if (message != null && message.ContainsKey("playerWon") && (bool)message["playerWon"]) return;
 			sendDeathLink("was unable to THINK!");
 		}
 		

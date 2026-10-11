@@ -16,6 +16,7 @@ namespace tmosthap {
 		public string room;
 		public int team;
 		public int slot;
+		public int lastItem;
 		public APConnectionInfo quickConnect;
 		public SaveData curSave;
 		public List<string> seenEnvs;
@@ -25,6 +26,7 @@ namespace tmosthap {
 			room = "";
 			team = -1;
 			slot = -1;
+			lastItem = -1;
 			quickConnect = new APConnectionInfo();
 			curSave = new SaveData();
 			seenEnvs = new List<string>();
@@ -221,6 +223,7 @@ namespace tmosthap {
 		}
 		
 		public static void saveAPSave() {
+			if (ModMain.curSlot != -1) file.saves[ModMain.curSlot].lastItem = ModMain.lastItem;
 			string content = JsonConvert.SerializeObject(file, Formatting.Indented);
 			File.WriteAllText(Application.dataPath + "/../apdata.save", content);
 		}
@@ -461,7 +464,7 @@ namespace tmosthap {
 				dv.FadeIn(0);
 				GameManager.Instance.ToggleHUD(true, 0);
 				
-				if (file.client.autoskipDialog) dv.GetType().GetMethod("OnClickContinue", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(dv, new object[]{});
+				if (file.client.autoskipDialog && !ModMain.inTrap) dv.GetType().GetMethod("OnClickContinue", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(dv, new object[]{});
 			}
 		}
 		
@@ -485,7 +488,7 @@ namespace tmosthap {
 				if (isCarSelect && ModMain.curSlot != -1) {
 					List<string> hasCars = new List<string>();
 					foreach (APItem item in APShared.items) {
-						if (ModMain.itemState[(ItemIds)item.id] > 0) hasCars.Add(item.env);
+						if (ModMain.hasItem((ItemIds)item.id)) hasCars.Add(item.env);
 					}
 					foreach (string key in SaveStates.states.Keys) {
 						bool hasCar = file.saves[ModMain.curSlot].seenEnvs.Contains(key) || hasCars.Contains(key);
@@ -529,7 +532,7 @@ namespace tmosthap {
 							if (SlotData.carRando) {
 								List<string> hasCars = new List<string>();
 								foreach (APItem item in APShared.items) {
-									if (ModMain.itemState[(ItemIds)item.id] > 0) hasCars.Add(item.env);
+									if (ModMain.hasItem((ItemIds)item.id)) hasCars.Add(item.env);
 								}
 								foreach (string key in SaveStates.states.Keys) {
 									bool hasCar = file.saves[ModMain.curSlot].seenEnvs.Contains(key) || hasCars.Contains(key);

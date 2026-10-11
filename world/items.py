@@ -6,6 +6,7 @@ class ItemType(Enum):
 	filler = 1
 	car = 2
 	evidence = 3
+	trap = 4
 
 from .apshared import apshared, item_name_to_id
 
@@ -18,6 +19,8 @@ class ItemState:
 		self.filler_items = []
 		self.progress_items = []
 		self.car_items = []
+		self.trap_items = []
+		self.trap_chance = 0
 		for item in apshared["items"]:
 			self.item_class[item["name"]] = item["type"]
 			if item["type"] == ItemType.filler:
@@ -29,11 +32,16 @@ class ItemState:
 			if item["type"] == ItemType.car:
 				self.item_class[item["name"]] = ItemClassification.progression
 				self.car_items.append(item["name"])
+			if item["type"] == ItemType.trap:
+				self.item_class[item["name"]] = ItemClassification.trap
+				self.trap_items.append(item["name"])
 	
 	def create_item(self, world, item):
 		return TMOSTHItem(item, self.item_class[item], item_name_to_id[item], world.player)
 
 	def get_filler_item(self, world):
+		if world.random.randint(0, 99) < self.trap_chance:
+			return world.random.choice(self.trap_items)
 		return world.random.choice(self.filler_items)
 	
 	def setup_items(self, world):
